@@ -23,28 +23,28 @@ class ConfigurationViewController : UITableViewController, CBPeripheralManagerDe
     var power : Int = 0
     
     var enabled : Bool?
-    var uuid : NSUUID?
+    var uuid : UUID?
     var major : NSNumber?
     var minor : NSNumber?
     var doneButton : UIBarButtonItem?
-    var numberFormatter = NSNumberFormatter()
+    var numberFormatter = NumberFormatter()
     
     let defaults = Defaults()
     
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)!
-        peripheralManager = CBPeripheralManager(delegate: self, queue: dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
+        peripheralManager = CBPeripheralManager(delegate: self, queue: DispatchQueue.global(qos: .background))
     }
     
     override init(style: UITableViewStyle) {
-        super.init(style: UITableViewStyle.Plain)
-        peripheralManager = CBPeripheralManager(delegate: self, queue: dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
+        super.init(style: UITableViewStyle.plain)
+        peripheralManager = CBPeripheralManager(delegate: self, queue: DispatchQueue.global(qos: .background))
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Done, target: self, action: #selector(ConfigurationViewController.doneEditing(_:)))
+        doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.done, target: self, action: #selector(ConfigurationViewController.doneEditing(sender:)))
         
         if region != nil {
             uuid = region?.proximityUUID
@@ -52,66 +52,66 @@ class ConfigurationViewController : UITableViewController, CBPeripheralManagerDe
             minor = region?.minor
         } else {
             uuid = defaults.defaultProximityUUID()
-            major = NSNumber(short: 0)
-            minor = NSNumber(short: 0)
+            major = NSNumber(value: 0)
+            minor = NSNumber(value: 0)
         }
         
         power = defaults.defaultPower
         
-        numberFormatter.numberStyle = NSNumberFormatterStyle.DecimalStyle
+        numberFormatter.numberStyle = NumberFormatter.Style.decimal
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         if peripheralManager == nil {
-            peripheralManager = CBPeripheralManager(delegate: self, queue: dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))
+            peripheralManager = CBPeripheralManager(delegate: self, queue: DispatchQueue.global(qos: .background))
         } else {
             peripheralManager.delegate = self
         }
         
-        self.enabledSwitch.on = peripheralManager.isAdvertising
-        enabled = enabledSwitch.on
+        self.enabledSwitch.isOn = peripheralManager.isAdvertising
+        enabled = enabledSwitch.isOn
         
-        uuidTextField.text = uuid?.UUIDString
+        uuidTextField.text = uuid?.uuidString
         majorTextField.text = major?.stringValue
         minorTextField.text = minor?.stringValue
         powerTextField.text = String(power)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
         peripheralManager.delegate = nil
     }
     
-    func peripheralManagerDidUpdateState(peripheral: CBPeripheralManager) {
+    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         
     }
     
     // MARK: Text editing
     
-    func textFieldShouldBeginEditing(textField: UITextField) -> Bool {
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
         if textField == uuidTextField {
-            self.performSegueWithIdentifier("selectUUID", sender: self)
+            self.performSegue(withIdentifier: "selectUUID", sender: self)
             return false
         }
         
         return true
     }
     
-    func textFieldDidBeginEditing(textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
         self.navigationItem.rightBarButtonItem = doneButton
     }
     
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         if let text = textField.text {
             if textField == majorTextField {
-                major = numberFormatter.numberFromString(text)
+                major = numberFormatter.number(from: text)
             } else if textField == minorTextField {
-                minor = numberFormatter.numberFromString(text)
+                minor = numberFormatter.number(from: text)
             } else if textField == powerTextField {
-                power = numberFormatter.numberFromString(text)!.integerValue
+                power = numberFormatter.number(from: text)!.intValue
                 if power > 0 {
                     let negativePower = power - (power * 2)
                     power = negativePower
@@ -126,7 +126,7 @@ class ConfigurationViewController : UITableViewController, CBPeripheralManagerDe
     }
     
     @IBAction func toggleEnabled(sender: UISwitch) {
-        enabled = sender.on
+        enabled = sender.isOn
         self.updateAdvertisedRegion()
     }
     
@@ -138,21 +138,21 @@ class ConfigurationViewController : UITableViewController, CBPeripheralManagerDe
         tableView.reloadData()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any!) {
         if segue.identifier == "selectUUID" {
-            let uuidSelector : UUIDViewController = segue.destinationViewController as! UUIDViewController
+            let uuidSelector : UUIDViewController = segue.destination as! UUIDViewController
             uuidSelector.uuid = self.uuid
         }
     }
     
     @IBAction func unwindUUIDSelector(sender: UIStoryboardSegue) {
-        let uuidSelector : UUIDViewController = sender.sourceViewController as! UUIDViewController
+        let uuidSelector : UUIDViewController = sender.source as! UUIDViewController
         self.uuid = uuidSelector.uuid
         self.updateAdvertisedRegion()
     }
     
     func updateAdvertisedRegion() {
-        if (peripheralManager.state.rawValue < CBPeripheralManagerState.PoweredOn.rawValue) {
+        if (peripheralManager.state.rawValue < CBPeripheralManagerState.poweredOn.rawValue) {
             let title = "Bluetooth must be enabled"
             let message = "To configure your device as a beacon"
             let cancelButtonTitle = "OK"
@@ -168,15 +168,15 @@ class ConfigurationViewController : UITableViewController, CBPeripheralManagerDe
             var majorShortValue: UInt16 = 0
             var minorShortValue: UInt16 = 0
             
-            let majorInt = major?.integerValue
-            let minorInt = minor?.integerValue
+            let majorInt = major?.intValue
+            let minorInt = minor?.intValue
             
             majorShortValue = UInt16(majorInt!)
             minorShortValue = UInt16(minorInt!)
             
-            region = CLBeaconRegion(proximityUUID: uuid!, major: majorShortValue, minor: minorShortValue, identifier: defaults.BeaconIdentifier)
+            region = CLBeaconRegion(proximityUUID: uuid! , major: majorShortValue, minor: minorShortValue, identifier: defaults.BeaconIdentifier)
             
-            let peripheralData = NSDictionary(dictionary: (region?.peripheralDataWithMeasuredPower(power))!) as! [String: AnyObject]
+            let peripheralData = NSDictionary(dictionary: (region?.peripheralData(withMeasuredPower: power as NSNumber))!) as! [String: AnyObject]
             peripheralManager.startAdvertising(peripheralData)
 
         }

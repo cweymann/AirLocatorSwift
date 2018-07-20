@@ -11,28 +11,30 @@ import UIKit
 
 
 class UUIDViewController : UITableViewController {
-    var uuid: NSUUID?
+    var uuid: UUID?
     let defaults = Defaults()
     
     // MARK: Table view data source
     
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    
+    override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return defaults.supportedProximityUUIDs.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let CellIdentifier = "Cell"
-        let cell = tableView.dequeueReusableCellWithIdentifier(CellIdentifier, forIndexPath:indexPath) as UITableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: CellIdentifier, for:indexPath as IndexPath) as UITableViewCell
         
         if indexPath.row < defaults.supportedProximityUUIDs.count {
-            cell.textLabel?.text = defaults.supportedProximityUUIDs[indexPath.row].UUIDString
+            cell.textLabel?.text = defaults.supportedProximityUUIDs[indexPath.row].uuidString
             
             if self.uuid == defaults.supportedProximityUUIDs[indexPath.row] {
-                cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+                cell.accessoryType = UITableViewCellAccessoryType.checkmark
             }
         }
         
@@ -41,7 +43,7 @@ class UUIDViewController : UITableViewController {
     
     // MARK: Navigation
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any!) {
         if let selectionIndexPath = tableView.indexPathForSelectedRow {
             var selection = 0
             

@@ -14,16 +14,16 @@ class CalibrationEndViewController : UIViewController {
     
     var measuredPower : Int?
     
-    func doneButtonTapped(sender: AnyObject?) {
-        self.navigationController?.popToRootViewControllerAnimated(true)
+    @objc func doneButtonTapped(sender: AnyObject?) {
+        self.navigationController?.popToRootViewController(animated: true)
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Done, target: self, action: #selector(CalibrationEndViewController.doneButtonTapped(_:)))
+        let doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.done, target: self, action: #selector(doneButtonTapped(sender:)))
         self.navigationItem.rightBarButtonItem = doneButton
-        measuredPowerLabel.text = "\(self.measuredPower)"
+        measuredPowerLabel.text = "\(String(describing: self.measuredPower))"
     }
     
     func setMeasuredPower(measuredPower: Int) {

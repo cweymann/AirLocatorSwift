@@ -20,7 +20,7 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
     @IBOutlet var notifyOnDisplaySwitch: UISwitch!
     
     var enabled: Bool?
-    var uuid: NSUUID?
+    var uuid: UUID?
     var major: NSNumber?
     var minor: NSNumber?
     var notifyOnEntry: Bool?
@@ -28,7 +28,7 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
     var notifyOnDisplay: Bool?
     
     var doneButton: UIBarButtonItem?
-    var numberFormatter = NSNumberFormatter()
+    var numberFormatter = NumberFormatter()
     var locationManager = CLLocationManager()
     
     let defaults = Defaults()
@@ -37,9 +37,9 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
         super.viewDidLoad()
         
         locationManager.delegate = self
-        numberFormatter.numberStyle = NSNumberFormatterStyle.DecimalStyle
+        numberFormatter.numberStyle = NumberFormatter.Style.decimal
         
-        let region = CLBeaconRegion(proximityUUID: NSUUID(), identifier: defaults.BeaconIdentifier)
+        let region = CLBeaconRegion(proximityUUID: UUID() , identifier: defaults.BeaconIdentifier)
         if locationManager.monitoredRegions.contains(region) {
             enabled = true
             uuid = region.proximityUUID
@@ -58,63 +58,63 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
             notifyOnDisplay = false
         }
         
-        doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Done, target: self, action: #selector(MonitoringViewController.doneEditing(_:)))
+        doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.done, target: self, action: #selector(doneEditing(sender:)))
         
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        uuidTextField.text = uuid?.UUIDString
-        enabledSwitch.on = enabled!
-        notifyOnEntrySwitch.on = notifyOnEntry!
-        notifyOnExitSwitch.on = notifyOnExit!
-        notifyOnDisplaySwitch.on = notifyOnDisplay!
+        uuidTextField.text = uuid?.uuidString
+        enabledSwitch.isOn = enabled!
+        notifyOnEntrySwitch.isOn = notifyOnEntry!
+        notifyOnExitSwitch.isOn = notifyOnExit!
+        notifyOnDisplaySwitch.isOn = notifyOnDisplay!
     }
     
     // MARK: Toggling state
     
     @IBAction func toggleEnabled(sender: UISwitch) {
-        enabled = sender.on
+        enabled = sender.isOn
         updateMonitoredRegion()
     }
     
     @IBAction func toggleNotifyOnEntry(sender: UISwitch) {
-        notifyOnEntry = sender.on
+        notifyOnEntry = sender.isOn
         updateMonitoredRegion()
     }
     
     @IBAction func toggleNotifyOnExit(sender: UISwitch) {
-        notifyOnExit = sender.on
+        notifyOnExit = sender.isOn
         updateMonitoredRegion()
     }
     
     @IBAction func toggleNotifyOnDisplay(sender: UISwitch) {
-        notifyOnDisplay = sender.on
+        notifyOnDisplay = sender.isOn
         updateMonitoredRegion()
     }
     
     // MARK: Text editing
     
-    func textFieldShouldBeginEditing(textField: UITextField) -> Bool {
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
         if textField == uuidTextField {
-            performSegueWithIdentifier("selectUUID", sender: self)
+            performSegue(withIdentifier: "selectUUID", sender: self)
             return false
         }
         
         return true
     }
     
-    func textFieldDidBeginEditing(textField: UITextField) {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
         navigationItem.rightBarButtonItem = doneButton
     }
     
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         if let text = textField.text {
             if textField == majorTextField {
-                major = numberFormatter.numberFromString(text)
+                major = numberFormatter.number(from: text)
             } else if textField == minorTextField {
-                minor = numberFormatter.numberFromString(text)
+                minor = numberFormatter.number(from: text)
             }
         }
         
@@ -131,42 +131,42 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
         tableView.reloadData()
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any!) {
         if segue.identifier == "selectUUID" {
-            let uuidSelector = segue.destinationViewController as! UUIDViewController
+            let uuidSelector = segue.destination as! UUIDViewController
             uuidSelector.uuid = uuid
         }
     }
     
     @IBAction func unwindUUIDSelector(sender: UIStoryboardSegue) {
-        let uuidSelector = sender.sourceViewController as! UUIDViewController
+        let uuidSelector = sender.source as! UUIDViewController
         
         uuid = uuidSelector.uuid
         updateMonitoredRegion()
     }
     
     func updateMonitoredRegion() {
-        var region:CLBeaconRegion? = CLBeaconRegion(proximityUUID: NSUUID(), identifier: defaults.BeaconIdentifier)
+        var region:CLBeaconRegion? = CLBeaconRegion(proximityUUID: UUID(), identifier: defaults.BeaconIdentifier)
         if let region = region {
-            locationManager.stopMonitoringForRegion(region)
+            locationManager.stopMonitoring(for: region)
         }
         
         if (enabled != nil) {
             var majorShortValue: UInt16 = 0
             var minorShortValue: UInt16 = 0
             
-            let majorInt = major?.shortValue
-            let minorInt = minor?.shortValue
+            let majorInt = major?.int16Value
+            let minorInt = minor?.int16Value
             
             majorShortValue = UInt16(majorInt!)
             minorShortValue = UInt16(minorInt!)
             
             if uuid != nil && major != nil && minor != nil {
-                region = CLBeaconRegion(proximityUUID: uuid!, major: majorShortValue, minor: minorShortValue, identifier: defaults.BeaconIdentifier)
+                region = CLBeaconRegion(proximityUUID: uuid! , major: majorShortValue, minor: minorShortValue, identifier: defaults.BeaconIdentifier)
             } else if uuid != nil && major != nil {
-                region = CLBeaconRegion(proximityUUID: uuid!, major: majorShortValue, identifier: defaults.BeaconIdentifier)
+                region = CLBeaconRegion(proximityUUID: uuid! , major: majorShortValue, identifier: defaults.BeaconIdentifier)
             } else if uuid != nil {
-                region = CLBeaconRegion(proximityUUID: uuid!, identifier: defaults.BeaconIdentifier)
+                region = CLBeaconRegion(proximityUUID: uuid! , identifier: defaults.BeaconIdentifier)
             }
             
             if let region = region {
@@ -174,13 +174,13 @@ class MonitoringViewController : UITableViewController, CLLocationManagerDelegat
                 region.notifyOnExit = notifyOnExit!
                 region.notifyEntryStateOnDisplay = notifyOnDisplay!
                 
-                locationManager.startMonitoringForRegion(region)
+                locationManager.startMonitoring(for: region)
             }
             
         } else {
-            region = CLBeaconRegion(proximityUUID: NSUUID(), identifier: defaults.BeaconIdentifier)
+            region = CLBeaconRegion(proximityUUID: UUID() , identifier: defaults.BeaconIdentifier)
             if let region = region {
-                locationManager.stopMonitoringForRegion(region)
+                locationManager.stopMonitoring(for: region)
             }
         }
     }
