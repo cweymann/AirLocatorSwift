@@ -27,9 +27,11 @@ class RangingViewController : UITableViewController, CLLocationManagerDelegate {
         super.viewDidLoad()
         
         locationManager.delegate = self
+        locationManager.requestAlwaysAuthorization()
         
         for uuid in defaults.supportedProximityUUIDs {
             let region = CLBeaconRegion(proximityUUID: uuid , identifier: uuid.uuidString)
+            
             rangedRegions.append(region)
         }
     }
